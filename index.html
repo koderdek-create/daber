@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<title>Дабер — разговорный иврит с ИИ</title>
+<meta name="description" content="Болталка на иврите с ИИ: исправления, никуд, транскрипция, словарь">
+<meta name="theme-color" content="#f5efe3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12161c" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Noto+Sans+Hebrew:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5efe3; --card:#fffdf8; --ink:#1d2633; --muted:#6a7280; --line:#e6dccb;
+  --blue:#1f4fa3; --blue-ink:#fffdf8; --blue-soft:#e4ecfa;
+  --green:#17724f; --green-soft:#e2f2ea; --amber:#9a5700; --amber-soft:#fcefd9;
+  --violet:#5b3fa0; --violet-soft:#eee8fa; --red:#b42318;
+  --he:'Noto Sans Hebrew','Rubik',system-ui,sans-serif;
+  --shadow:0 1px 2px rgba(30,30,20,.06),0 4px 14px rgba(30,30,20,.05);
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#12161c; --card:#1b2129; --ink:#eef1f5; --muted:#98a2b0; --line:#2a323d;
+  --blue:#82adff; --blue-ink:#0c1526; --blue-soft:#1b2944;
+  --green:#5fd0a3; --green-soft:#132d25; --amber:#f2b45c; --amber-soft:#2f2517;
+  --violet:#b9a2f5; --violet-soft:#251f3b; --red:#ff8a80;
+  --shadow:none;
+}}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:Rubik,system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit}
+[hidden]{display:none!important}
+.app{display:flex;flex-direction:column;height:100dvh;max-width:680px;margin:0 auto;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+
+header{display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 12px 10px 14px;border-bottom:1px solid var(--line);background:var(--bg)}
+.logo{width:38px;height:38px;border-radius:11px;background:var(--blue);color:var(--blue-ink);display:grid;place-items:center;font-family:var(--he);font-weight:600;font-size:19px;flex:none}
+.title{flex:1;min-width:0}
+.title b{display:block;font-size:16px;font-weight:600}
+.title span{display:block;font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.iconbtn{border:0;background:transparent;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;cursor:pointer;position:relative;flex:none}
+.iconbtn:hover{background:var(--line)}
+.iconbtn svg{width:22px;height:22px}
+.badge{position:absolute;top:3px;right:2px;background:var(--blue);color:var(--blue-ink);font-size:10px;font-weight:600;border-radius:9px;min-width:17px;height:17px;padding:0 4px;display:grid;place-items:center}
+
+main{flex:1;overflow-y:auto;padding:16px 12px 10px;overscroll-behavior:contain}
+.notice{background:var(--amber-soft);color:var(--amber);border-radius:12px;padding:10px 12px;font-size:13.5px;margin:0 0 12px;line-height:1.4}
+
+.msg{display:flex;flex-direction:column;margin:0 0 14px;max-width:88%}
+.msg.bot{align-items:flex-start}
+.msg.user{margin-left:auto;align-items:flex-end}
+.bubble{border-radius:18px;padding:11px 14px;box-shadow:var(--shadow);line-height:1.45}
+.bot .bubble{background:var(--card);border:1px solid var(--line);border-top-left-radius:6px}
+.user .bubble{background:var(--blue);color:var(--blue-ink);border-top-right-radius:6px;font-size:17px;white-space:pre-wrap;word-break:break-word}
+.user .bubble:dir(rtl){font-family:var(--he)}
+.he{font-family:var(--he);font-size:21px;line-height:1.6;text-align:right}
+.tr{font-size:13.5px;color:var(--muted);margin-top:3px}
+.ru{font-size:14.5px;margin-top:7px;padding-top:7px;border-top:1px dashed var(--line)}
+.tools{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}
+.chipbtn{border:1px solid var(--line);background:transparent;border-radius:999px;padding:5px 10px;font-size:12.5px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;color:var(--muted)}
+.chipbtn:hover{border-color:var(--muted);color:var(--ink)}
+.chipbtn.on{background:var(--blue-soft);border-color:transparent;color:var(--blue)}
+.chipbtn svg{width:15px;height:15px}
+.words{display:flex;flex-direction:column;gap:6px;margin-top:9px}
+.word{display:flex;align-items:center;gap:10px;background:var(--bg);border-radius:12px;padding:7px 8px 7px 10px}
+.word .wt{flex:1;min-width:0}
+.word .wru{font-size:14px}
+.word .wtr{font-size:12px;color:var(--muted)}
+.word .whe{font-family:var(--he);font-size:19px;direction:rtl}
+.star{border:0;background:transparent;cursor:pointer;width:32px;height:32px;border-radius:10px;display:grid;place-items:center;color:var(--muted)}
+.star.on{color:var(--amber)}
+.star svg{width:19px;height:19px}
+
+.corr{margin-top:6px;border-radius:14px;padding:9px 12px;font-size:13.5px;line-height:1.4;max-width:100%}
+.corr.fix{background:var(--amber-soft)}
+.corr.translate{background:var(--green-soft)}
+.corr.answer{background:var(--violet-soft)}
+.corr .lbl{font-weight:600;font-size:12px;letter-spacing:.02em;text-transform:uppercase}
+.corr.fix .lbl{color:var(--amber)} .corr.translate .lbl{color:var(--green)} .corr.answer .lbl{color:var(--violet)}
+.corr .row{display:flex;align-items:center;gap:6px;justify-content:flex-end}
+.corr .che{font-family:var(--he);font-size:19px;direction:rtl;text-align:right;flex:1}
+.corr .ctr{color:var(--muted);font-size:12.5px;text-align:right}
+.corr .cex{margin-top:4px}
+.ok{font-size:12.5px;color:var(--green);margin-top:4px}
+
+.typing{display:inline-flex;gap:5px;padding:14px 16px}
+.typing i{width:7px;height:7px;border-radius:50%;background:var(--muted);opacity:.4;animation:b 1.2s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes b{0%,60%,100%{opacity:.3;transform:none}30%{opacity:1;transform:translateY(-3px)}}
+
+.hints{background:var(--card);border:1px dashed var(--line);border-radius:16px;padding:10px;margin:0 0 14px}
+.hints .lbl{font-size:12.5px;color:var(--muted);margin:0 2px 6px}
+.hint{display:block;width:100%;text-align:right;border:0;background:var(--bg);border-radius:12px;padding:8px 11px;margin-top:6px;cursor:pointer}
+.hint:hover{outline:1px solid var(--line)}
+.hint .hhe{font-family:var(--he);font-size:18px;direction:rtl}
+.hint .hru{font-size:12.5px;color:var(--muted);direction:ltr;text-align:left}
+
+.err{display:flex;align-items:center;gap:10px;background:var(--amber-soft);color:var(--amber);border-radius:12px;padding:9px 12px;font-size:13.5px;margin:0 0 14px}
+.err button{margin-left:auto;border:0;background:var(--amber);color:var(--card);border-radius:999px;padding:5px 12px;cursor:pointer;font-size:13px}
+
+.composer{border-top:1px solid var(--line);padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:var(--bg)}
+.quick{display:flex;gap:6px;overflow-x:auto;padding:0 2px 8px;scrollbar-width:none}
+.quick::-webkit-scrollbar{display:none}
+.quick button{flex:none;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer;white-space:nowrap}
+.quick button:disabled{opacity:.5;cursor:default}
+.inrow{display:flex;align-items:flex-end;gap:6px}
+textarea{flex:1;resize:none;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:20px;padding:10px 14px;font:inherit;font-size:17px;line-height:1.35;max-height:140px;outline:none}
+textarea:focus{border-color:var(--blue)}
+textarea:dir(rtl){font-family:var(--he)}
+.round{width:44px;height:44px;border-radius:50%;border:0;display:grid;place-items:center;cursor:pointer;flex:none}
+.round svg{width:22px;height:22px}
+.send{background:var(--blue);color:var(--blue-ink)}
+.send:disabled{opacity:.4;cursor:default}
+.mic{background:var(--card);border:1px solid var(--line)}
+.mic.on{background:var(--red);color:#fff;border-color:transparent;animation:pulse 1.4s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 6px rgba(180,35,24,.15)}}
+
+/* sheets */
+.sheet{position:fixed;inset:0;z-index:20;background:var(--bg);overflow-y:auto}
+.sheet .inner{max-width:680px;margin:0 auto;padding:calc(16px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom))}
+.sheet h1{font-size:26px;margin:6px 0 4px;font-weight:700}
+.sheet h1 .heb{font-family:var(--he);color:var(--blue);font-weight:600}
+.sheet .lead{color:var(--muted);margin:0 0 18px;line-height:1.45}
+.sheet h2{font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:22px 0 8px;font-weight:600}
+.seg{display:grid;gap:8px}
+.seg.c3{grid-template-columns:repeat(3,1fr)} .seg.c2{grid-template-columns:repeat(2,1fr)}
+.opt{border:1.5px solid var(--line);background:var(--card);border-radius:14px;padding:10px;text-align:left;cursor:pointer;line-height:1.3}
+.opt b{display:block;font-size:14.5px;font-weight:600}
+.opt small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.opt.sel{border-color:var(--blue);background:var(--blue-soft)}
+.topics{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.topics .opt{display:flex;gap:9px;align-items:center}
+.topics .opt .em{font-size:20px}
+.custom{width:100%;margin-top:8px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:14px;padding:11px 12px;font:inherit;font-size:15px;outline:none}
+.custom:focus{border-color:var(--blue)}
+.toggle{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:11px 12px;margin-bottom:8px;cursor:pointer}
+.toggle .tt{flex:1}
+.toggle .tt b{display:block;font-weight:500;font-size:15px}
+.toggle .tt small{color:var(--muted);font-size:12.5px}
+.sw{width:44px;height:26px;border-radius:13px;background:var(--line);position:relative;flex:none;transition:.2s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.toggle.on .sw{background:var(--blue)}
+.toggle.on .sw::after{left:21px}
+.primary{width:100%;border:0;background:var(--blue);color:var(--blue-ink);border-radius:16px;padding:15px;font-size:17px;font-weight:600;cursor:pointer;margin-top:22px}
+.primary:disabled{opacity:.5;cursor:default}
+.secondary{width:100%;border:1.5px solid var(--line);background:transparent;border-radius:16px;padding:13px;font-size:16px;cursor:pointer;margin-top:10px}
+.sheethead{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.sheethead h1{flex:1;margin:0}
+.wlist .word{background:var(--card);border:1px solid var(--line);margin-bottom:8px;padding:9px 8px 9px 12px}
+.empty{color:var(--muted);text-align:center;padding:30px 10px;line-height:1.5}
+.foot{color:var(--muted);font-size:12px;text-align:center;margin-top:18px;line-height:1.45}
+.keybox{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px}
+.keybox label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+.keyrow{display:flex;gap:8px}
+.keyrow input{flex:1;min-width:0;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);border-radius:12px;padding:10px 12px;font:inherit;font-size:15px;outline:none;font-family:ui-monospace,monospace}
+.keyrow input:focus{border-color:var(--blue)}
+.keyrow button{border:0;background:var(--blue);color:var(--blue-ink);border-radius:12px;padding:0 14px;font-size:14px;font-weight:500;cursor:pointer}
+.keystat{font-size:13px;margin-top:8px;line-height:1.4}
+.keystat.ok{color:var(--green)} .keystat.bad{color:var(--red)}
+.keyhelp{font-size:13px;color:var(--muted);line-height:1.5;margin-top:10px}
+.keyhelp a{color:var(--blue)}
+.keyhelp ol{margin:6px 0 0;padding-left:20px}
+select.custom{appearance:auto}
+.install{display:flex;align-items:center;gap:12px;background:var(--blue-soft);border-radius:14px;padding:12px;margin-bottom:6px}
+.install div{flex:1;font-size:14px;line-height:1.35}
+.install button{border:0;background:var(--blue);color:var(--blue-ink);border-radius:999px;padding:9px 16px;font-weight:600;cursor:pointer}
+.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translate(-50%,20px);max-width:min(92vw,520px);background:var(--ink);color:var(--bg);padding:11px 14px;border-radius:14px;font-size:14px;line-height:1.4;opacity:0;pointer-events:none;transition:.25s;z-index:40}
+.toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+@media (max-width:380px){.seg.c3{grid-template-columns:1fr}.topics{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo" aria-hidden="true">דַּ</div>
+    <div class="title"><b>Дабер</b><span id="sub">Разговорный иврит с ИИ</span></div>
+    <button class="iconbtn" id="wordsBtn" aria-label="Мои слова"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/><path d="M9 8h6"/></svg><span class="badge" id="wcount" hidden>0</span></button>
+    <button class="iconbtn" id="setBtn" aria-label="Настройки"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
+  </header>
+  <main id="chat" aria-live="polite"></main>
+  <div class="composer">
+    <div class="quick">
+      <button id="hintBtn">💡 Подсказка</button>
+      <button id="howBtn">❓ Как сказать…</button>
+      <button id="slowBtn">🐢 Не понял(а)</button>
+    </div>
+    <div class="inrow">
+      <textarea id="inp" rows="1" dir="auto" placeholder="Пиши на иврите или по-русски…"></textarea>
+      <button class="round mic" id="micBtn" aria-label="Надиктовать" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+      <button class="round send" id="sendBtn" aria-label="Отправить"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+    </div>
+  </div>
+</div>
+
+<!-- setup -->
+<section class="sheet" id="setup" hidden>
+  <div class="inner">
+    <h1>Дабер <span class="heb">דַּבֵּר</span></h1>
+    <p class="lead">Болтай на иврите с Ноа — она ответит, мягко поправит ошибки и подскажет слова. Можно писать и по-русски: она покажет, как это сказать на иврите.</p>
+    <div class="notice" id="aiNote" hidden></div>
+    <div class="install" id="installBox" hidden><div>Установи Дабер на телефон — будет иконка и полноэкранный режим.</div><button id="installBtn">Установить</button></div>
+
+    <h2>Искусственный интеллект</h2>
+    <div class="keybox">
+      <label for="provider">Кто будет Ноа</label>
+      <select class="custom" id="provider" style="margin:0 0 12px"></select>
+      <label for="apiKey" id="keyLbl">Ключ API — хранится только на этом телефоне</label>
+      <div class="keyrow"><input id="apiKey" type="password" autocomplete="off" autocapitalize="off" spellcheck="false"><button id="keyCheck">Проверить</button></div>
+      <div class="keystat" id="keyStat"></div>
+      <label for="model" style="margin-top:12px">Модель</label>
+      <select class="custom" id="model" style="margin-top:0"></select>
+      <input class="custom" id="modelCustom" placeholder="Название модели, например gpt-6-sol" autocapitalize="off" spellcheck="false" hidden>
+      <div class="keyhelp" id="keyHelp"></div>
+    </div>
+
+    <h2>Уровень</h2>
+    <div class="seg c3" id="lvl"></div>
+
+    <h2>Обращаться ко мне</h2>
+    <div class="seg c2" id="gen"></div>
+
+    <h2>Ситуация</h2>
+    <div class="topics" id="tops"></div>
+    <input class="custom" id="customTopic" placeholder="Своя тема: например, «спор с соседом о парковке»" hidden>
+
+    <h2>Показывать</h2>
+    <div id="tgls"></div>
+
+    <button class="primary" id="startBtn">Начать разговор</button>
+    <button class="secondary" id="backBtn" hidden>Вернуться к разговору</button>
+    <p class="foot">Ответы генерирует ИИ и могут содержать неточности. Переписка, словарь и ключ хранятся только на этом устройстве; запросы идут напрямую в Anthropic.</p>
+  </div>
+</section>
+
+<!-- words -->
+<section class="sheet" id="wordsSheet" hidden>
+  <div class="inner">
+    <div class="sheethead"><h1>Мои слова</h1><button class="iconbtn" id="wClose" aria-label="Закрыть"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <p class="lead">Сохраняй слова звёздочкой в разговоре. Включи тренировку — и Ноа будет вплетать их в беседу.</p>
+    <div id="practiceTgl"></div>
+    <div class="wlist" id="wlist"></div>
+  </div>
+</section>
+
+<script>
+(function(){
+'use strict';
+const KEY='daber.v1';
+const $=s=>document.querySelector(s);
+const el=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;};
+
+const ICON={
+  speak:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg>',
+  star:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg>',
+  starOn:'<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg>',
+  trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg>'
+};
+
+const LEVELS={
+  beginner:{name:'Начинающий',desc:'Простые короткие фразы',
+    rule:'Ученик — начинающий (ульпан алеф). Говори очень просто: 1–2 коротких предложения (до 8 слов каждое), в основном настоящее время, самая частотная лексика, без сленга и идиом. Задавай простые вопросы, на которые легко ответить.'},
+  intermediate:{name:'Средний',desc:'Быт, прошедшее и будущее',
+    rule:'Ученик — средний уровень (ульпан бет–гимель). 2–3 предложения, прошедшее и будущее время, обычная бытовая лексика, иногда разговорные выражения.'},
+  advanced:{name:'Продвинутый',desc:'Живая речь, сленг, идиомы',
+    rule:'Ученик — продвинутый. Говори как настоящая израильтянка: естественно, со сленгом и идиомами, 2–4 предложения; шути, спорь, рассказывай о себе.'}
+};
+const TOPICS=[
+  {id:'free',em:'💬',name:'Свободная беседа',rule:'Свободная беседа: ты — Ноа, приятельница ученика. Расспрашивай его о жизни, работе, планах, интересах, делись своим.'},
+  {id:'cafe',em:'☕',name:'Кафе',rule:'Ролевая игра: ты — бариста в тель-авивском кафе, ученик — посетитель. Прими заказ, уточни детали, предложи что-нибудь.'},
+  {id:'shuk',em:'🍅',name:'Рынок (шук)',rule:'Ролевая игра: ты — громкая и весёлая продавщица овощей и фруктов на рынке Кармель. Ученик — покупатель; можно торговаться.'},
+  {id:'taxi',em:'🚕',name:'Такси',rule:'Ролевая игра: ты — таксистка, ученик — пассажир. Уточни адрес, поболтай по дороге, обсуди цену и пробки.'},
+  {id:'doctor',em:'🩺',name:'У врача',rule:'Ролевая игра: ты — семейный врач в больничной кассе, ученик — пациент. Расспроси о самочувствии, дай простые рекомендации.'},
+  {id:'flat',em:'🏠',name:'Съём квартиры',rule:'Ролевая игра: ты — хозяйка квартиры, ученик хочет её снять. Обсудите комнаты, цену, арнону, ваад байт, договор.'},
+  {id:'job',em:'💼',name:'Собеседование',rule:'Ролевая игра: ты — менеджер по персоналу, проводишь собеседование с учеником. Спрашивай об опыте, сильных сторонах, ожиданиях.'},
+  {id:'neighbor',em:'👋',name:'Новый сосед',rule:'Ролевая игра: ты — соседка, ученик только что переехал в твой дом. Познакомься, расскажи о районе, пригласи на кофе.'},
+  {id:'bank',em:'🏦',name:'Банк / почта',rule:'Ролевая игра: ты — служащая банка. Ученик пришёл решить вопрос со счётом, картой или переводом.'},
+  {id:'rest',em:'🍽️',name:'Ресторан',rule:'Ролевая игра: ты — официантка в ресторане. Предложи столик, расскажи о блюдах, прими заказ, принеси счёт.'},
+  {id:'custom',em:'✏️',name:'Своя тема',rule:''}
+];
+
+const S={level:'beginner',gender:'m',topic:'free',customTopic:'',nikud:true,translit:true,autoRu:false,practice:false,msgs:[],words:[],hints:null};
+try{const v=JSON.parse(localStorage.getItem(KEY)||'null');if(v&&typeof v==='object')Object.assign(S,v);}catch(e){}
+S.hints=null;
+function save(){try{const c=Object.assign({},S);delete c.hints;localStorage.setItem(KEY,JSON.stringify(c));}catch(e){}}
+
+/* ---------- AI connection: Claude / ChatGPT / Grok / OpenRouter ---------- */
+let sampleFn=null, busy=false, error=null;
+const SYS='Ты — движок приложения для изучения иврита. Всегда отвечай строго одним JSON-объектом без markdown.';
+const PROVIDERS={
+  anthropic:{name:'Claude (Anthropic)',ph:'sk-ant-…',url:'https://api.anthropic.com/v1/messages',
+    models:[['claude-sonnet-5-5','Claude Sonnet 5.5 — точнее'],['claude-haiku-5-5','Claude Haiku 5.5 — быстрее и намного дешевле']],
+    help:'<ol><li>Открой <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a> и войди.</li><li>В Billing пополни баланс.</li><li>В API Keys нажми «Create Key», скопируй ключ сюда.</li></ol>Подписка Claude Pro/Max сюда не подходит — у API отдельный баланс.'},
+  openai:{name:'ChatGPT (OpenAI)',ph:'sk-…',url:'https://api.openai.com/v1/chat/completions',tokParam:'max_completion_tokens',
+    models:[['gpt-6-sol','GPT-6 Sol — точнее'],['gpt-6-luna','GPT-6 Luna — намного дешевле']],
+    help:'<ol><li>Открой <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com/api-keys</a> и войди.</li><li>В Billing пополни баланс.</li><li>Нажми «Create new secret key», скопируй ключ сюда.</li></ol>Подписка ChatGPT Plus сюда не подходит — у API отдельный баланс.'},
+  xai:{name:'Grok (xAI)',ph:'xai-…',url:'https://api.x.ai/v1/chat/completions',tokParam:'max_tokens',
+    models:[['grok-4.7','Grok 4.7']],
+    help:'<ol><li>Открой <a href="https://console.x.ai" target="_blank" rel="noopener">console.x.ai</a> и войди.</li><li>Пополни баланс (Credits).</li><li>В API Keys создай ключ и скопируй сюда.</li></ol>Если Grok не подключается напрямую — выбери OpenRouter, там Grok тоже есть.'},
+  openrouter:{name:'OpenRouter — все модели одним ключом',ph:'sk-or-…',url:'https://openrouter.ai/api/v1/chat/completions',tokParam:'max_tokens',
+    models:[['~x-ai/grok-latest','Grok (последний)']],
+    help:'<ol><li>Открой <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a> и войди.</li><li>Пополни Credits.</li><li>Создай ключ и скопируй сюда.</li></ol>Один ключ — Claude, GPT, Grok, Gemini и другие. Название любой модели можно взять на openrouter.ai/models и вписать в «Другая модель».'}
+};
+const ls={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:v;}catch(e){return d;}},set(k,v){try{if(v)localStorage.setItem(k,v);else localStorage.removeItem(k);}catch(e){}}};
+// migrate the first version's single Anthropic key
+if(ls.get('daber.key','')&&!ls.get('daber.key.anthropic','')){ls.set('daber.key.anthropic',ls.get('daber.key',''));ls.set('daber.model.anthropic',ls.get('daber.model',''));ls.set('daber.key','');}
+const getProv=()=>PROVIDERS[ls.get('daber.provider','anthropic')]?ls.get('daber.provider','anthropic'):'anthropic';
+const getKey=()=>ls.get('daber.key.'+getProv(),'');
+const setKey=k=>ls.set('daber.key.'+getProv(),k);
+const getModel=()=>ls.get('daber.model.'+getProv(),'')||PROVIDERS[getProv()].models[0][0];
+async function callAPI(prompt,maxTokens){
+  const pid=getProv(),P=PROVIDERS[pid],key=getKey();
+  if(!key)throw {code:'no_key'};
+  const max=maxTokens||4000;let req;
+  if(pid==='anthropic'){
+    req={headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:{model:getModel(),max_tokens:max,system:SYS,messages:[{role:'user',content:prompt}]}};
+  }else{
+    const body={model:getModel(),messages:[{role:'system',content:SYS},{role:'user',content:prompt}]};body[P.tokParam]=max;
+    const headers={'content-type':'application/json','authorization':'Bearer '+key};
+    if(pid==='openrouter'){headers['HTTP-Referer']=location.origin;headers['X-Title']='Daber';}
+    req={headers,body};
+  }
+  let res;
+  try{res=await fetch(P.url,{method:'POST',headers:req.headers,body:JSON.stringify(req.body)});}
+  catch(e){throw {code:navigator.onLine===false?'offline':'network'};}
+  let data=null;try{data=await res.json();}catch(e){}
+  if(!res.ok){
+    const err=(data&&data.error)||{},msg=(typeof err==='string'?err:err.message)||'';
+    const code=res.status===401?'bad_key':
+      (/credit|balance|billing|quota|insufficient/i.test(msg+' '+(err.code||'')+' '+(err.type||'')))||res.status===402?'no_credit':
+      res.status===429?'rate_limited':(res.status===529||res.status===503||err.type==='overloaded_error')?'overloaded':
+      (res.status===404||/model/i.test(msg)&&res.status===400)?'bad_model':'api';
+    throw {code,message:msg};
+  }
+  let text='';
+  if(pid==='anthropic')text=(data&&data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+  else{const c=data&&data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;text=Array.isArray(c)?c.map(x=>x.text||'').join(''):(c||'');}
+  return {text};
+}
+function refreshAI(){
+  sampleFn=getKey()?callAPI:null;
+  const note=$('#aiNote');
+  if(sampleFn){note.hidden=true;}
+  else{note.hidden=false;note.textContent='Чтобы Ноа заговорила, выбери ИИ и вставь ключ ниже.';}
+  $('#startBtn').disabled=!sampleFn;
+  updateComposer();
+}
+
+/* ---------- speech (Web Speech API) ---------- */
+const canSpeak=()=>('speechSynthesis' in window);
+let heVoice=null;
+function pickVoice(){try{const vs=speechSynthesis.getVoices();heVoice=vs.find(v=>/^(he|iw)[-_]?/i.test(v.lang)&&/google/i.test(v.name))||vs.find(v=>/^(he|iw)/i.test(v.lang))||null;}catch(e){}}
+if(canSpeak()){pickVoice();try{speechSynthesis.addEventListener('voiceschanged',pickVoice);}catch(e){}}
+let voiceWarned=false;
+async function speak(text,btn){
+  if(!text||!canSpeak())return;
+  if(!heVoice)pickVoice();
+  if(!heVoice&&!voiceWarned){voiceWarned=true;toast('Если не слышно иврита: Настройки Android → Система → Язык → Синтез речи → Google → установить голос «Иврит».');}
+  if(btn)btn.classList.add('on');
+  try{
+    const u=new SpeechSynthesisUtterance(text);u.lang='he-IL';if(heVoice)u.voice=heVoice;
+    u.rate=S.level==='beginner'?0.85:0.95;
+    speechSynthesis.cancel();
+    await new Promise(r=>{u.onend=r;u.onerror=r;speechSynthesis.speak(u);setTimeout(r,30000);});
+  }finally{if(btn)btn.classList.remove('on');}
+}
+function speakBtn(text,cls){
+  const b=el('button',cls||'chipbtn');b.innerHTML=ICON.speak;b.setAttribute('aria-label','Озвучить');
+  b.onclick=()=>speak(text,b);return b;
+}
+let toastT=null;
+function toast(msg){
+  let t=$('#toast');if(!t){t=el('div','toast');t.id='toast';document.body.appendChild(t);}
+  t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),6000);
+  t.onclick=()=>t.classList.remove('show');
+}
+
+/* ---------- dictation (SpeechRecognition, he-IL) ---------- */
+let listening=false, dictBase='', rec=null;
+function setupMic(){
+  const mic=$('#micBtn');
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){mic.hidden=true;return;}
+  mic.hidden=false;
+  mic.onclick=()=>{
+    if(listening&&rec){try{rec.stop();}catch(e){}return;}
+    dictBase=$('#inp').value.trim();
+    rec=new SR();rec.lang='he-IL';rec.interimResults=true;rec.continuous=false;rec.maxAlternatives=1;
+    rec.onstart=()=>{listening=true;mic.classList.add('on');};
+    rec.onend=()=>{listening=false;mic.classList.remove('on');updateComposer();};
+    rec.onerror=e=>{listening=false;mic.classList.remove('on');
+      if(e.error==='not-allowed'||e.error==='service-not-allowed')toast('Нет доступа к микрофону. Разреши его в настройках приложения.');
+      else if(e.error==='language-not-supported')toast('Распознавание иврита недоступно на этом устройстве.');
+      else if(e.error==='network')toast('Для распознавания речи нужен интернет.');};
+    rec.onresult=ev=>{
+      let fin='',part='';
+      for(let i=0;i<ev.results.length;i++){const r=ev.results[i];if(r.isFinal)fin+=r[0].transcript;else part+=r[0].transcript;}
+      $('#inp').value=[dictBase,fin.trim(),part.trim()].filter(Boolean).join(' ');autosize();updateComposer();
+    };
+    try{rec.start();}catch(e){}
+  };
+}
+setupMic();
+
+/* ---------- install (PWA) ---------- */
+let deferredInstall=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;$('#installBox').hidden=false;});
+window.addEventListener('appinstalled',()=>{deferredInstall=null;$('#installBox').hidden=true;toast('Дабер установлен — ищи иконку на экране телефона.');});
+$('#installBtn').onclick=async()=>{if(!deferredInstall)return;deferredInstall.prompt();try{await deferredInstall.userChoice;}catch(e){}deferredInstall=null;$('#installBox').hidden=true;};
+if('serviceWorker' in navigator&&location.protocol!=='file:'){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
+
+/* ---------- key settings ---------- */
+(function(){
+  const pv=$('#provider'),k=$('#apiKey'),st=$('#keyStat'),m=$('#model'),mc=$('#modelCustom'),help=$('#keyHelp');
+  Object.entries(PROVIDERS).forEach(([id,P])=>{const o=el('option','',P.name);o.value=id;pv.appendChild(o);});
+  function fill(){
+    const pid=getProv(),P=PROVIDERS[pid];pv.value=pid;
+    k.value=getKey();k.placeholder=P.ph;
+    m.innerHTML='';P.models.forEach(([id,n])=>{const o=el('option','',n);o.value=id;m.appendChild(o);});
+    const oc=el('option','','Другая модель…');oc.value='__custom';m.appendChild(oc);
+    const cur=getModel();
+    if(P.models.some(x=>x[0]===cur)){m.value=cur;mc.hidden=true;}else{m.value='__custom';mc.hidden=false;mc.value=cur;}
+    help.innerHTML='<b>Как получить ключ:</b>'+P.help;
+    if(getKey()){st.className='keystat ok';st.textContent='Ключ сохранён.';help.hidden=true;}else{st.textContent='';help.hidden=false;}
+    refreshAI();
+  }
+  fill();
+  pv.addEventListener('change',()=>{ls.set('daber.provider',pv.value);fill();});
+  k.addEventListener('input',()=>{setKey(k.value.trim());refreshAI();});
+  m.addEventListener('change',()=>{if(m.value==='__custom'){mc.hidden=false;mc.focus();}else{mc.hidden=true;ls.set('daber.model.'+getProv(),m.value);}});
+  mc.addEventListener('input',()=>ls.set('daber.model.'+getProv(),mc.value.trim()));
+  $('#keyCheck').onclick=async()=>{
+    setKey(k.value.trim());refreshAI();
+    if(!getKey()){st.className='keystat bad';st.textContent='Вставь ключ.';return;}
+    st.className='keystat';st.textContent='Проверяю…';
+    try{await callAPI('Верни JSON {"ok":true}',300);st.className='keystat ok';st.textContent='✓ Ключ работает. Можно начинать!';help.hidden=true;}
+    catch(e){st.className='keystat bad';st.textContent=e&&e.code==='network'?'Не удалось связаться с сервером. Если это Grok — попробуй через OpenRouter.':errText(e);help.hidden=false;}
+  };
+})();
+
+/* ---------- AI ---------- */
+function topicRule(){
+  if(S.topic==='custom'){const t=(S.customTopic||'').trim()||'свободная беседа';return 'Ситуация, которую выбрал ученик: «'+t+'». Подыграй ей: возьми подходящую роль и веди разговор.';}
+  return (TOPICS.find(t=>t.id===S.topic)||TOPICS[0]).rule;
+}
+function context(){
+  const g=S.gender==='f'?'женщина: обращайся к ней в женском роде; в исправлениях и подсказках используй формы женского рода (она говорит о себе в ж.р.)':'мужчина: обращайся к нему в мужском роде; в исправлениях и подсказках используй формы мужского рода (он говорит о себе в м.р.)';
+  const practice=(S.practice&&S.words.length)?'\nУченик сейчас учит эти слова — старайся естественно вплетать некоторые из них в разговор: '+S.words.slice(-20).map(w=>w.he).join(', ')+'.':'';
+  const lines=S.msgs.slice(-24).map(m=>m.role==='user'?'Ученик: '+m.text:'Ноа: '+m.he).join('\n');
+  return 'Ты — Ноа, дружелюбная израильтянка лет тридцати, собеседница в приложении для практики разговорного иврита. Ученик — русскоязычный, живёт в Израиле или собирается; ученик — '+g+'.\n'+
+    LEVELS[S.level].rule+'\n'+topicRule()+practice+'\n\nРазговор до сих пор:\n'+(lines||'(пока пусто)');
+}
+const ITEM='{"he":"текст на иврите без огласовок","nikud":"тот же текст с полной огласовкой (никуд)","translit":"транскрипция кириллицей, ударный слог заглавными буквами (пример: ма шлОмха)","ru":"перевод на русский"}';
+function replyPrompt(){
+  const first=!S.msgs.some(m=>m.role==='user');
+  return context()+'\n\n'+(first?
+    'Разговор только начинается: поздоровайся и начни ситуацию первой репликой. correction = null.':
+    'Ответь на последнюю реплику ученика.\nСначала проверь её:\n- на иврите и с ошибками (грамматика, род, число, предлоги, порядок слов, неестественная фраза) → correction.kind = "fix", fixed = правильный вариант всей фразы, explain = коротко по-русски, в чём ошибка (1–2 предложения);\n- написано по-русски или смесь языков → correction.kind = "translate", fixed = как это естественно сказать на иврите, explain = короткое полезное пояснение (или пустая строка); и отвечай так, будто ученик сказал это на иврите;\n- вопрос о языке («как сказать…», «что значит…», «почему…») → correction.kind = "answer", explain = короткий ответ по-русски, fixed = ключевая фраза на иврите; в reply продолжай разговор;\n- всё правильно → correction = null. Отсутствие огласовок, пунктуации и мелкие опечатки ошибкой не считай.')+
+  '\n\nПравила для reply: только иврит, живой современный разговорный язык, как говорят в Израиле; обычно заканчивай вопросом или репликой, на которую легко ответить, чтобы разговор шёл дальше. Не переходи на русский в reply.\n'+
+  'words: 1–4 слова или выражения из твоей реплики, которые могут быть новыми для этого уровня (в той форме, в какой они в реплике; ru — значение).\n\n'+
+  'Верни ТОЛЬКО JSON, без markdown и пояснений:\n{"correction": null или {"kind":"fix|translate|answer","fixed":"...","fixed_nikud":"... с никудом","fixed_translit":"... кириллицей","explain":"..."}, "reply": '+ITEM+', "words": ['+ITEM+']}';
+}
+function hintPrompt(){
+  return context()+'\n\nПредложи ученику 3 разных варианта ответа на последнюю реплику Ноа — коротких, естественных, на его уровне, в его грамматическом роде. Варианты должны вести разговор в разные стороны.\nВерни ТОЛЬКО JSON, без markdown: {"options":['+ITEM+']}';
+}
+function parseJSON(t){
+  t=String(t||'').trim().replace(/^```(?:json)?\s*/i,'').replace(/```\s*$/,'');
+  const a=t.indexOf('{'),b=t.lastIndexOf('}');
+  if(a<0||b<a)throw {code:'bad_json'};
+  return JSON.parse(t.slice(a,b+1));
+}
+async function ask(prompt){
+  if(!sampleFn)throw {code:'no_key'};
+  let lastErr;
+  for(let i=0;i<2;i++){
+    try{const r=await sampleFn(prompt);return parseJSON(r&&r.text);}
+    catch(e){lastErr=e;const parseFail=(e instanceof SyntaxError)||(e&&e.code==='bad_json');if(!parseFail)throw e;}
+  }
+  throw lastErr;
+}
+function errText(e){
+  const c=e&&e.code;
+  if(c==='no_key')return 'Нет ключа API. Открой настройки и вставь ключ.';
+  if(c==='bad_model')return 'Такой модели нет или она недоступна для этого ключа — выбери другую.';
+  if(c==='bad_key')return 'Ключ не подходит. Проверь, что скопировал его целиком.';
+  if(c==='no_credit')return 'На балансе API закончились деньги. Пополни его в разделе Billing.';
+  if(c==='rate_limited')return 'Слишком много запросов подряд — подожди минутку.';
+  if(c==='overloaded')return 'Сервер ИИ перегружен. Попробуй через минуту.';
+  if(c==='offline')return 'Нет интернета.';
+  if(c==='network')return 'Не удалось связаться с сервером ИИ.';
+  if(c==='bad_model')return 'Модель недоступна для этого ключа — выбери другую в настройках.';
+  if(c==='api'&&e.message)return 'Ошибка ИИ: '+e.message;
+  return 'Не получилось получить ответ.';
+}
+
+async function callBot(){
+  if(busy)return;
+  busy=true;error=null;S.hints=null;render();
+  try{
+    const r=await ask(replyPrompt());
+    const rep=r.reply||{};
+    if(!rep.he)throw {code:'bad_json'};
+    const lastUser=[...S.msgs].reverse().find(m=>m.role==='user');
+    if(lastUser&&S.msgs[S.msgs.length-1]===lastUser){
+      lastUser.corr=(r.correction&&r.correction.fixed)?r.correction:null;
+      lastUser.checked=true;
+    }
+    S.msgs.push({role:'bot',he:rep.he,nikud:rep.nikud||'',translit:rep.translit||'',ru:rep.ru||'',words:Array.isArray(r.words)?r.words.filter(w=>w&&w.he):[],showRu:false,showWords:false});
+    save();
+  }catch(e){error={text:errText(e),retry:callBot};}
+  busy=false;render();
+}
+async function getHints(){
+  if(busy||!sampleFn)return;
+  busy=true;error=null;S.hints='loading';render();
+  try{
+    const r=await ask(hintPrompt());
+    S.hints=(r.options||[]).filter(o=>o&&o.he).slice(0,3);
+  }catch(e){S.hints=null;error={text:errText(e),retry:getHints};}
+  busy=false;render();
+}
+function send(text){
+  text=(text||'').trim();
+  if(!text||busy||!sampleFn)return;
+  if(listening&&rec){try{rec.stop();}catch(e){}}
+  dictBase='';
+  S.msgs.push({role:'user',text});
+  $('#inp').value='';autosize();
+  save();callBot();
+}
+
+/* ---------- words ---------- */
+const isSaved=w=>S.words.some(x=>x.he===w.he);
+function toggleWord(w){
+  if(isSaved(w))S.words=S.words.filter(x=>x.he!==w.he);
+  else S.words.push({he:w.he,nikud:w.nikud||'',translit:w.translit||'',ru:w.ru||''});
+  save();render();renderWords();
+}
+function wordRow(w,removable){
+  const row=el('div','word');
+  if(canSpeak())row.appendChild(speakBtn(w.nikud||w.he,'star'));
+  const t=el('div','wt');
+  t.appendChild(el('div','whe',(S.nikud&&w.nikud)?w.nikud:w.he));
+  if(S.translit&&w.translit)t.appendChild(el('div','wtr',w.translit));
+  t.appendChild(el('div','wru',w.ru||''));
+  row.appendChild(t);
+  const s=el('button','star'+(removable?'':(isSaved(w)?' on':'')));
+  if(removable){s.innerHTML=ICON.trash;s.setAttribute('aria-label','Удалить');}
+  else{s.innerHTML=isSaved(w)?ICON.starOn:ICON.star;s.setAttribute('aria-label',isSaved(w)?'Убрать из словаря':'В словарь');}
+  s.onclick=()=>toggleWord(w);
+  row.appendChild(s);
+  return row;
+}
+
+/* ---------- render ---------- */
+function render(){
+  const chat=$('#chat');chat.innerHTML='';
+  const topic=TOPICS.find(t=>t.id===S.topic)||TOPICS[0];
+  $('#sub').textContent=LEVELS[S.level].name+' · '+(S.topic==='custom'&&S.customTopic?S.customTopic:topic.name);
+  const wc=$('#wcount');wc.hidden=!S.words.length;wc.textContent=S.words.length;
+
+  S.msgs.forEach(m=>{
+    if(m.role==='user'){
+      const w=el('div','msg user');
+      const b=el('div','bubble',m.text);b.dir='auto';w.appendChild(b);
+      if(m.corr){
+        const c=m.corr,k=['fix','translate','answer'].includes(c.kind)?c.kind:'fix';
+        const box=el('div','corr '+k);
+        box.appendChild(el('div','lbl',k==='fix'?'Лучше сказать':k==='translate'?'На иврите':'Ответ'));
+        if(k==='answer'&&c.explain)box.appendChild(el('div','cex',c.explain));
+        const row=el('div','row');
+        row.appendChild(el('div','che',(S.nikud&&c.fixed_nikud)?c.fixed_nikud:c.fixed));
+        if(canSpeak())row.appendChild(speakBtn(c.fixed_nikud||c.fixed,'star'));
+        box.appendChild(row);
+        if(S.translit&&c.fixed_translit)box.appendChild(el('div','ctr',c.fixed_translit));
+        if(k!=='answer'&&c.explain)box.appendChild(el('div','cex',c.explain));
+        w.appendChild(box);
+      }else if(m.checked&&/[֐-׿]/.test(m.text)){
+        w.appendChild(el('div','ok','✓ без ошибок'));
+      }
+      chat.appendChild(w);
+    }else{
+      const w=el('div','msg bot');const b=el('div','bubble');
+      const he=el('div','he',(S.nikud&&m.nikud)?m.nikud:m.he);he.dir='rtl';he.lang='he';b.appendChild(he);
+      if(S.translit&&m.translit)b.appendChild(el('div','tr',m.translit));
+      const showRu=S.autoRu||m.showRu;
+      if(showRu&&m.ru)b.appendChild(el('div','ru',m.ru));
+      const tools=el('div','tools');
+      if(canSpeak()){const sb=speakBtn(m.nikud||m.he);sb.insertAdjacentText('beforeend','Слушать');tools.appendChild(sb);}
+      if(!S.autoRu&&m.ru){const rb=el('button','chipbtn'+(m.showRu?' on':''),m.showRu?'Скрыть перевод':'Перевод');rb.onclick=()=>{m.showRu=!m.showRu;save();render();};tools.appendChild(rb);}
+      if(m.words&&m.words.length){const wb=el('button','chipbtn'+(m.showWords?' on':''),'Слова · '+m.words.length);wb.onclick=()=>{m.showWords=!m.showWords;save();render();};tools.appendChild(wb);}
+      b.appendChild(tools);
+      if(m.showWords&&m.words){const ws=el('div','words');m.words.forEach(x=>ws.appendChild(wordRow(x,false)));b.appendChild(ws);}
+      w.appendChild(b);chat.appendChild(w);
+    }
+  });
+
+  if(S.hints){
+    const h=el('div','hints');
+    if(S.hints==='loading'){h.appendChild(el('div','lbl','Подбираю варианты ответа…'));}
+    else{
+      h.appendChild(el('div','lbl','Можно ответить так — нажми, чтобы вставить:'));
+      S.hints.forEach(o=>{
+        const b=el('button','hint');
+        b.appendChild(el('div','hhe',(S.nikud&&o.nikud)?o.nikud:o.he));
+        b.appendChild(el('div','hru',(S.translit&&o.translit?o.translit+' — ':'')+(o.ru||'')));
+        b.onclick=()=>{const i=$('#inp');i.value=o.he;S.hints=null;render();autosize();updateComposer();i.focus();};
+        h.appendChild(b);
+      });
+    }
+    chat.appendChild(h);
+  }
+  if(busy&&S.hints!=='loading'){const w=el('div','msg bot');const b=el('div','bubble typing');b.innerHTML='<i></i><i></i><i></i>';w.appendChild(b);chat.appendChild(w);}
+  if(error){
+    const e=el('div','err');e.appendChild(el('span','',error.text));
+    const rb=el('button','','Повторить');const fn=error.retry;rb.onclick=()=>{error=null;fn();};e.appendChild(rb);chat.appendChild(e);
+  }
+  if(!S.msgs.length&&!busy&&!error){
+    const n=el('div','empty','Выбери уровень и ситуацию в настройках и начни разговор.');chat.appendChild(n);
+  }
+  requestAnimationFrame(()=>{chat.scrollTop=chat.scrollHeight;});
+  updateComposer();
+}
+function updateComposer(){
+  const has=!!$('#inp').value.trim();
+  $('#sendBtn').disabled=!has||busy||!sampleFn;
+  const lastBot=S.msgs.length&&S.msgs[S.msgs.length-1].role==='bot';
+  $('#hintBtn').disabled=busy||!sampleFn||!lastBot;
+  $('#slowBtn').disabled=busy||!sampleFn||!lastBot;
+  $('#howBtn').disabled=busy||!sampleFn;
+}
+function autosize(){const i=$('#inp');i.style.height='auto';i.style.height=Math.min(i.scrollHeight,140)+'px';}
+
+/* ---------- setup sheet ---------- */
+function toggleRow(label,hint,key,cb){
+  const t=el('div','toggle'+(S[key]?' on':''));t.setAttribute('role','switch');t.setAttribute('aria-checked',S[key]?'true':'false');t.tabIndex=0;
+  const tt=el('div','tt');tt.appendChild(el('b','',label));if(hint)tt.appendChild(el('small','',hint));
+  t.appendChild(tt);t.appendChild(el('div','sw'));
+  const flip=()=>{S[key]=!S[key];save();t.classList.toggle('on',S[key]);t.setAttribute('aria-checked',S[key]?'true':'false');render();if(cb)cb();};
+  t.onclick=flip;t.onkeydown=e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();flip();}};
+  return t;
+}
+function renderSetup(){
+  const lvl=$('#lvl');lvl.innerHTML='';
+  Object.entries(LEVELS).forEach(([k,v])=>{const b=el('button','opt'+(S.level===k?' sel':''));b.appendChild(el('b','',v.name));b.appendChild(el('small','',v.desc));b.onclick=()=>{S.level=k;save();renderSetup();render();};lvl.appendChild(b);});
+  const gen=$('#gen');gen.innerHTML='';
+  [['m','В мужском роде','אַתָּה — ата'],['f','В женском роде','אַתְּ — ат']].forEach(([k,n,d])=>{const b=el('button','opt'+(S.gender===k?' sel':''));b.appendChild(el('b','',n));b.appendChild(el('small','',d));b.onclick=()=>{S.gender=k;save();renderSetup();};gen.appendChild(b);});
+  const tops=$('#tops');tops.innerHTML='';
+  TOPICS.forEach(t=>{const b=el('button','opt'+(S.topic===t.id?' sel':''));b.appendChild(el('span','em',t.em));b.appendChild(el('b','',t.name));b.onclick=()=>{S.topic=t.id;save();renderSetup();render();if(t.id==='custom')$('#customTopic').focus();};tops.appendChild(b);});
+  const ct=$('#customTopic');ct.hidden=S.topic!=='custom';ct.value=S.customTopic||'';
+  const tg=$('#tgls');tg.innerHTML='';
+  tg.appendChild(toggleRow('Огласовки (никуд)','Точки и чёрточки, чтобы правильно читать','nikud'));
+  tg.appendChild(toggleRow('Транскрипция','Как читается — русскими буквами','translit'));
+  tg.appendChild(toggleRow('Перевод сразу','Иначе — по нажатию на «Перевод»','autoRu'));
+  $('#backBtn').hidden=!S.msgs.length;
+  $('#startBtn').textContent=S.msgs.length?'Начать новый разговор':'Начать разговор';
+}
+$('#customTopic').addEventListener('input',e=>{S.customTopic=e.target.value;save();render();});
+function openSetup(){renderSetup();refreshAI();$('#setup').hidden=false;}
+function closeSetup(){$('#setup').hidden=true;}
+$('#setBtn').onclick=openSetup;
+$('#backBtn').onclick=closeSetup;
+$('#startBtn').onclick=()=>{S.msgs=[];S.hints=null;error=null;save();closeSetup();render();callBot();};
+
+/* ---------- words sheet ---------- */
+function renderWords(){
+  const p=$('#practiceTgl');p.innerHTML='';
+  p.appendChild(toggleRow('Тренировать мои слова','Ноа будет использовать их в разговоре','practice'));
+  const l=$('#wlist');l.innerHTML='';
+  if(!S.words.length){l.appendChild(el('div','empty','Пока пусто. В разговоре нажми «Слова» под репликой Ноа и отметь звёздочкой то, что хочешь запомнить.'));return;}
+  [...S.words].reverse().forEach(w=>l.appendChild(wordRow(w,true)));
+}
+$('#wordsBtn').onclick=()=>{renderWords();$('#wordsSheet').hidden=false;};
+$('#wClose').onclick=()=>{$('#wordsSheet').hidden=true;};
+
+/* ---------- composer ---------- */
+const inp=$('#inp');
+inp.addEventListener('input',()=>{autosize();updateComposer();});
+inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&window.matchMedia('(pointer:fine)').matches){e.preventDefault();send(inp.value);}});
+$('#sendBtn').onclick=()=>send(inp.value);
+$('#hintBtn').onclick=getHints;
+$('#howBtn').onclick=()=>{if(!inp.value.trim().toLowerCase().startsWith('как сказать'))inp.value='Как сказать: '+inp.value;inp.focus();autosize();updateComposer();try{inp.setSelectionRange(inp.value.length,inp.value.length);}catch(e){}};
+$('#slowBtn').onclick=()=>send('לא הבנתי, אפשר יותר לאט ופשוט?');
+if('speechSynthesis' in window){try{speechSynthesis.getVoices();speechSynthesis.onvoiceschanged=()=>{};}catch(e){}}
+
+render();
+if(!S.msgs.length||!getKey())openSetup();
+refreshAI();
+})();
+</script>
+</body>
+</html>
